@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Hospital Resource Management Database System</title>
+<style>
+  :root{
+    --bg:#0d1520;
+    --panel:#141f30;
+    --panel2:#182640;
+    --accent:#e14b6a;
+    --accent2:#7ee0c3;
+    --text:#e8edf5;
+    --muted:#8ea0bd;
+    --border:#233350;
+    --ok:#4ade80;
+    --busy:#f5a83f;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; padding:0; max-width:480px; margin:0 auto;
+    background:var(--bg); color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-tap-highlight-color:transparent;
+  }
+  header{
+    padding:22px 18px 16px; text-align:center;
+    background:linear-gradient(160deg,#152238,#0d1520);
+    border-bottom:1px solid var(--border);
+  }
+  header h1{margin:0 0 4px; font-size:17px; letter-spacing:.3px;}
+  header p{margin:0; color:var(--muted); font-size:12px;}
+  .badges{display:flex; gap:6px; justify-content:center; margin-top:10px; flex-wrap:wrap;}
+  .badge{
+    font-size:10.5px; padding:4px 9px; border-radius:20px;
+    background:var(--panel2); color:var(--accent2); border:1px solid var(--border);
+  }
+  main{padding:16px;}
+  .card{
+    background:var(--panel); border:1px solid var(--border); border-radius:14px;
+    padding:16px; margin-bottom:14px;
+  }
+  .card h2{
+    font-size:13px; text-transform:uppercase; letter-spacing:.6px;
+    color:var(--accent2); margin:0 0 12px;
+  }
+  .tab-row{display:flex; gap:6px; overflow-x:auto; padding-bottom:2px; margin-bottom:12px; -webkit-overflow-scrolling:touch;}
+  .tab-btn{
+    flex:0 0 auto; font-size:11.5px; padding:7px 12px; border-radius:8px;
+    background:var(--panel2); color:var(--muted); border:1px solid var(--border); white-space:nowrap;
+  }
+  .tab-btn.active{background:var(--accent); color:#2a0510; border-color:var(--accent); font-weight:700;}
+  .table-wrap{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  table.data{width:100%; border-collapse:collapse; font-size:11.5px; min-width:340px;}
+  table.data th{
+    background:var(--panel2); color:var(--accent2); text-align:left; padding:7px 8px;
+    font-size:10.5px; text-transform:uppercase; letter-spacing:.4px; white-space:nowrap;
+  }
+  table.data td{padding:7px 8px; border-bottom:1px solid var(--border); white-space:nowrap;}
+  table.data tr:last-child td{border-bottom:none;}
+  .status-pill{
+    font-size:10px; padding:2px 7px; border-radius:10px; font-weight:700;
+  }
+  .status-available{background:rgba(74,222,128,.15); color:var(--ok);}
+  .status-occupied{background:rgba(245,168,63,.15); color:var(--busy);}
+  .query-select{
+    width:100%; padding:10px; border-radius:9px; border:1px solid var(--border);
+    background:#0f1929; color:var(--text); font-size:13px; margin-bottom:10px;
+  }
+  button{
+    -webkit-appearance:none; border:none; cursor:pointer;
+    font-family:inherit; font-weight:600;
+  }
+  .btn-primary{
+    width:100%; padding:12px; border-radius:9px; background:var(--accent);
+    color:#2a0510; font-size:14px;
+  }
+  .btn-primary:active{transform:scale(.98);}
+  pre.sql{
+    background:#0a1220; border:1px solid var(--border); border-radius:9px;
+    padding:11px; font-size:11px; line-height:1.5; overflow-x:auto; margin:10px 0;
+    font-family:ui-monospace,Menlo,Consolas,monospace; color:#c9d6ea;
+  }
+  .kw{color:#e14b6a;} .tp{color:#7ee0c3;} .cm{color:#5b7291;}
+  .result-label{font-size:11px; color:var(--muted); margin-bottom:6px; text-transform:uppercase; letter-spacing:.4px;}
+  .erd{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  .erd-track{display:flex; flex-direction:column; align-items:center; gap:0; min-width:260px; padding:6px 0;}
+  .erd-node{
+    background:var(--panel2); border:1px solid var(--border); border-radius:9px;
+    padding:9px 20px; font-size:13px; font-weight:700; color:var(--text); text-align:center; min-width:160px;
+  }
+  .erd-arrow{color:var(--accent); font-size:16px; padding:2px 0;}
+  .steps-list{counter-reset:step; padding:0; margin:0; list-style:none;}
+  .steps-list li{
+    counter-increment:step; position:relative; padding:8px 0 8px 34px; font-size:12.5px;
+    color:var(--text); border-bottom:1px solid var(--border);
+  }
+  .steps-list li:last-child{border-bottom:none;}
+  .steps-list li::before{
+    content:counter(step); position:absolute; left:0; top:7px;
+    width:22px; height:22px; border-radius:50%; background:var(--accent);
+    color:#2a0510; font-size:11px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+  .norm-item{padding:10px 0; border-bottom:1px solid var(--border);}
+  .norm-item:last-child{border-bottom:none;}
+  .norm-item .nf{font-weight:700; color:var(--accent2); font-size:12.5px;}
+  .norm-item .desc{font-size:12px; color:var(--muted); margin-top:2px;}
+  .app-list{list-style:none; padding:0; margin:0; display:flex; flex-wrap:wrap; gap:6px;}
+  .app-list li{
+    font-size:11.5px; padding:6px 10px; border-radius:8px; background:var(--panel2);
+    color:var(--text); border:1px solid var(--border);
+  }
+  footer{
+    text-align:center; padding:18px 16px 26px; font-size:11px; color:var(--muted);
+    border-top:1px solid var(--border);
+  }
+  footer a{color:var(--accent);}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Hospital Resource Management</h1>
+  <p>Database Management Systems (DBMS) &nbsp;•&nbsp; GSSIPU Semester 4</p>
+  <div class="badges">
+    <span class="badge">Database Design &amp; SQL Project</span>
+    <span class="badge">Intermediate</span>
+  </div>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>▸ Database Tables</h2>
+    <div class="tab-row" id="tabRow"></div>
+    <div class="table-wrap">
+      <table class="data" id="dataTable"></table>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>▸ Run a Query</h2>
+    <select class="query-select" id="querySelect">
+      <option value="allPatients">SELECT * FROM Patient;</option>
+      <option value="allDoctors">SELECT * FROM Doctor;</option>
+      <option value="availableRooms">SELECT * FROM Room WHERE Status='Available';</option>
+      <option value="joinQuery">JOIN: Patient ⋈ Appointment ⋈ Doctor</option>
+    </select>
+    <pre class="sql" id="sqlPreview"></pre>
+    <button class="btn-primary" id="runBtn">Run Query</button>
+    <div style="margin-top:12px;">
+      <div class="result-label">Result</div>
+      <div class="table-wrap"><table class="data" id="resultTable"></table></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>▸ Entity Relationship Flow</h2>
+    <div class="erd">
+      <div class="erd-track">
+        <div class="erd-node">PATIENT</div>
+        <div class="erd-arrow">↓</div>
+        <div class="erd-node">APPOINTMENT</div>
+        <div class="erd-arrow">↓</div>
+        <div class="erd-node">DOCTOR</div>
+        <div class="erd-arrow">↓</div>
+        <div class="erd-node">ADMISSION</div>
+        <div class="erd-arrow">↓</div>
+        <div class="erd-node">ROOM</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>▸ Database Workflow</h2>
+    <ol class="steps-list">
+      <li>Patient Registration</li>
+      <li>Doctor Assignment</li>
+      <li>Appointment Booking</li>
+      <li>Admission</li>
+      <li>Room Allocation</li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h2>▸ Normalization Applied</h2>
+    <div class="norm-item">
+      <div class="nf">First Normal Form (1NF)</div>
+      <div class="desc">No repeating groups — each field holds a single atomic value.</div>
+    </div>
+    <div class="norm-item">
+      <div class="nf">Second Normal Form (2NF)</div>
+      <div class="desc">No partial dependency — non-key fields depend on the whole primary key.</div>
+    </div>
+    <div class="norm-item">
+      <div class="nf">Third Normal Form (3NF)</div>
+      <div class="desc">No transitive dependency — non-key fields depend only on the key.</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>▸ Applications</h2>
+    <ul class="app-list">
+      <li>Hospitals</li>
+      <li>Clinics</li>
+      <li>Medical Centers</li>
+      <li>Emergency Services</li>
+      <li>Healthcare Industry</li>
+    </ul>
+  </div>
+
+</main>
+
+<footer>
+  Hospital Resource Management Database System — DBMS Mini Project<br>
+  GSSIPU Semester 4 · Mayank Swaraj<br>
+  <a href="https://github.com/mayankswaraj18cr-cmd" target="_blank">GitHub</a> ·
+  <a href="https://linkedin.com/in/mayank-swaraj-4b84b6410" target="_blank">LinkedIn</a>
+</footer>
+
+<script>
+// In-memory relational data mirroring the SQL schema
+const db = {
+  Patient: [
+    { PatientID:1, Name:'Mayank', Age:19, Gender:'Male', Phone:'9876543210' },
+    { PatientID:2, Name:'Isha', Age:34, Gender:'Female', Phone:'9123456780' },
+    { PatientID:3, Name:'Rohan', Age:47, Gender:'Male', Phone:'9988776655' },
+  ],
+  Doctor: [
+    { DoctorID:101, Name:'Sharma', Specialization:'Cardiology', Experience:12 },
+    { DoctorID:102, Name:'Verma', Specialization:'Orthopedics', Experience:8 },
+    { DoctorID:103, Name:'Nair', Specialization:'Pediatrics', Experience:15 },
+  ],
+  Room: [
+    { RoomID:201, RoomType:'General', Status:'Available' },
+    { RoomID:202, RoomType:'ICU', Status:'Occupied' },
+    { RoomID:203, RoomType:'Private', Status:'Available' },
+  ],
+  Appointment: [
+    { AppointmentID:301, PatientID:1, DoctorID:101, Date:'2026-08-20' },
+    { AppointmentID:302, PatientID:2, DoctorID:102, Date:'2026-08-21' },
+    { AppointmentID:303, PatientID:3, DoctorID:103, Date:'2026-08-22' },
+  ],
+  Admission: [
+    { AdmissionID:401, PatientID:2, RoomID:202, AdmissionDate:'2026-08-19' },
+  ],
+};
+
+const tabRow = document.getElementById('tabRow');
+const dataTable = document.getElementById('dataTable');
+const tables = ['Patient','Doctor','Room','Appointment','Admission'];
+let activeTable = 'Patient';
+
+function renderTabs(){
+  tabRow.innerHTML = '';
+  tables.forEach(t => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (t === activeTable ? ' active' : '');
+    btn.textContent = t;
+    btn.addEventListener('click', () => { activeTable = t; renderTabs(); renderTable(); });
+    tabRow.appendChild(btn);
+  });
+}
+
+function renderTable(){
+  const rows = db[activeTable];
+  const cols = Object.keys(rows[0]);
+  let html = '<thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>' + cols.map(c => {
+      if(c === 'Status'){
+        const cls = r[c] === 'Available' ? 'status-available' : 'status-occupied';
+        return `<td><span class="status-pill ${cls}">${r[c]}</span></td>`;
+      }
+      return `<td>${r[c]}</td>`;
+    }).join('') + '</tr>';
+  });
+  html += '</tbody>';
+  dataTable.innerHTML = html;
+}
+
+const queries = {
+  allPatients: {
+    sql: `<span class="kw">SELECT</span> * <span class="kw">FROM</span> Patient;`,
+    run: () => db.Patient,
+  },
+  allDoctors: {
+    sql: `<span class="kw">SELECT</span> * <span class="kw">FROM</span> Doctor;`,
+    run: () => db.Doctor,
+  },
+  availableRooms: {
+    sql: `<span class="kw">SELECT</span> * <span class="kw">FROM</span> Room\n<span class="kw">WHERE</span> Status=<span class="cm">'Available'</span>;`,
+    run: () => db.Room.filter(r => r.Status === 'Available'),
+  },
+  joinQuery: {
+    sql: `<span class="kw">SELECT</span> Patient.Name, Doctor.Name, Doctor.Specialization\n<span class="kw">FROM</span> Appointment\n<span class="kw">JOIN</span> Patient <span class="kw">ON</span> Appointment.PatientID=Patient.PatientID\n<span class="kw">JOIN</span> Doctor <span class="kw">ON</span> Appointment.DoctorID=Doctor.DoctorID;`,
+    run: () => db.Appointment.map(a => {
+      const p = db.Patient.find(x => x.PatientID === a.PatientID);
+      const d = db.Doctor.find(x => x.DoctorID === a.DoctorID);
+      return { PatientName: p.Name, DoctorName: d.Name, Specialization: d.Specialization, Date: a.Date };
+    }),
+  },
+};
+
+const querySelect = document.getElementById('querySelect');
+const sqlPreview = document.getElementById('sqlPreview');
+const resultTable = document.getElementById('resultTable');
+
+function updatePreview(){
+  sqlPreview.innerHTML = queries[querySelect.value].sql;
+}
+
+function renderResult(rows){
+  if(rows.length === 0){
+    resultTable.innerHTML = '<tbody><tr><td style="padding:8px; color:#8ea0bd;">No rows returned.</td></tr></tbody>';
+    return;
+  }
+  const cols = Object.keys(rows[0]);
+  let html = '<thead><tr>' + cols.map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>';
+  rows.forEach(r => {
+    html += '<tr>' + cols.map(c => `<td>${r[c]}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody>';
+  resultTable.innerHTML = html;
+}
+
+querySelect.addEventListener('change', updatePreview);
+document.getElementById('runBtn').addEventListener('click', () => {
+  renderResult(queries[querySelect.value].run());
+});
+
+// init
+renderTabs();
+renderTable();
+updatePreview();
+renderResult(queries.allPatients.run());
+</script>
+
+</body>
+</html>
