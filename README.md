@@ -15,10 +15,12 @@ This project uses primary keys, foreign keys, constraints, indexes, views, and a
 ## Features
 
 - Interactive [hospital DBMS demo](src/hospital_dbms.html) with table tabs and query previews
-- MySQL schema with nine normalized tables and referential integrity constraints
+- MySQL schema with nine normalized domain tables plus a stock-audit table
 - Seed data for departments, patients, doctors, rooms, appointments, admissions, medicines, prescriptions, and payments
 - Reusable views for doctor schedules, room occupancy, and patient visit summaries
 - Reporting queries using joins, aggregation, conditional expressions, CTEs, and window functions
+- Stored procedures for booking, admission, discharge, restocking, and patient summaries
+- MySQL functions, workflow triggers, and medication stock audit history
 - Research paper and presentation documenting the project background and design
 
 ## Data Model
@@ -46,7 +48,8 @@ The database is centered on `patients` and connects clinical, operational, and f
 ├── sql/
 │   ├── 01_schema.sql               # database, tables, indexes, and views
 │   ├── 02_seed_data.sql             # sample hospital records
-│   └── 03_queries.sql               # reports and validation queries
+│   ├── 03_queries.sql               # reports and validation queries
+│   └── 04_routines_and_triggers.sql # procedures, functions, triggers, and audit log
 ├── assets/                          # images and other static assets
 ├── docs/
 │   ├── Hospital_DBMS_Research_Paper.pdf
@@ -76,9 +79,10 @@ Install MySQL 8.0+, start the MySQL service, and run the scripts in order:
 mysql -u root -p < sql/01_schema.sql
 mysql -u root -p hospital_db < sql/02_seed_data.sql
 mysql -u root -p hospital_db < sql/03_queries.sql
+mysql -u root -p hospital_db < sql/04_routines_and_triggers.sql
 ```
 
-The schema script can be rerun during development because it recreates the project tables and views. The seed script should normally be run once after the schema. Change the sample dates and records before using this database for real testing.
+The schema script can be rerun during development because it recreates the project tables and views. The seed script should normally be run once after the schema. Load the routines after the seed data so future inserts and updates use the workflow triggers. Change the sample dates and records before using this database for real testing.
 
 ## SQL Highlights
 
@@ -92,6 +96,9 @@ The SQL implementation demonstrates:
 - Composite indexes for appointment dates, admission status, prescriptions, and payments
 - Views that hide repeated joins from application and reporting code
 - Aggregation, conditional sums, CTEs, and `ROW_NUMBER()` in reporting queries
+- Stored procedures with transactions, row locks, validation, and `SIGNAL` errors
+- Reusable functions for patient age and outstanding balance
+- Triggers that synchronize room state, validate billable payments, and audit stock changes
 
 The design keeps patient, doctor, department, room, and medication facts in their own tables. Transactional tables store relationships and events, which avoids repeating the same descriptive data and supports 1NF, 2NF, and 3NF.
 
@@ -109,6 +116,15 @@ The design keeps patient, doctor, department, room, and medication facts in thei
 8. Patients with multiple clinical interactions
 9. The latest appointment for every patient
 10. Room-status consistency validation
+
+`sql/04_routines_and_triggers.sql` provides operational database behavior:
+
+- `sp_book_appointment` checks the patient, doctor, and time-slot conflict before booking
+- `sp_admit_patient` locks and assigns an available room inside a transaction
+- `sp_discharge_patient` closes an admission and moves the room to cleaning
+- `sp_restock_medication` updates stock and records an audit event
+- `sp_patient_summary` combines age, balance, visits, and admissions for one patient
+- `fn_patient_age` and `fn_patient_balance` provide reusable computed values
 
 ## Development Workflow
 
@@ -146,6 +162,7 @@ Useful branch purposes include:
 - [Schema](sql/01_schema.sql) — executable DDL and reusable views
 - [Seed Data](sql/02_seed_data.sql) — sample records for local development
 - [Reports](sql/03_queries.sql) — example joins, analytics, and integrity checks
+- [Routines and Triggers](sql/04_routines_and_triggers.sql) — procedures, functions, workflow rules, and audit logging
 
 ## Roadmap
 

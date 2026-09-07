@@ -3,6 +3,7 @@ CREATE DATABASE IF NOT EXISTS hospital_db;
 USE hospital_db;
 
 SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS medication_stock_audit;
 DROP VIEW IF EXISTS vw_patient_visits;
 DROP VIEW IF EXISTS vw_room_occupancy;
 DROP VIEW IF EXISTS vw_doctor_schedule;
